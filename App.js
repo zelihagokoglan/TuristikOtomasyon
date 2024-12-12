@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { View, Alert, Text, ActivityIndicator } from "react-native";
-import MapView, { Marker, UrlTile, Callout } from "react-native-maps";
+import {
+  View,
+  Alert,
+  Text,
+  ActivityIndicator,
+  Image,
+  Modal,
+  TouchableOpacity,
+} from "react-native";
+import MapView, { Marker, UrlTile } from "react-native-maps";
 import * as Location from "expo-location";
 import { useNearbyPlaces } from "./src/hooks/useNearbyPlaces";
 import globalStyles from "./src/styles/globalStyles";
-import Icon from "react-native-vector-icons/MaterialIcons";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 export default function App() {
   const [location, setLocation] = useState(null);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
   const radius = 1000;
 
   useEffect(() => {
@@ -31,6 +42,11 @@ export default function App() {
     location?.longitude,
     radius
   );
+
+  const handleMarkerPress = (place) => {
+    setSelectedPlace(place);
+    setModalVisible(true);
+  };
 
   return (
     <View style={globalStyles.container}>
@@ -56,15 +72,7 @@ export default function App() {
               longitude: location.longitude,
             }}
             title="Mevcut Konum"
-          >
-            <Callout>
-              <View>
-                <Text>Konumunuz...</Text>
-                <Text>Latitude: {location.latitude}</Text>
-                <Text>Longitude: {location.longitude}</Text>
-              </View>
-            </Callout>
-          </Marker>
+          />
         )}
 
         {places.map((place) => (
@@ -74,31 +82,53 @@ export default function App() {
               latitude: place.latitude,
               longitude: place.longitude,
             }}
-            title={place.name}
-            description={place.type}
+            onPress={() => handleMarkerPress(place)}
           >
             <View style={{ alignItems: "center" }}>
               {place.type === "hotel" ? (
-                <Icon name="hotel" size={24} color="blue" />
+                <FontAwesome5 name="hotel" size={18} color="black" />
               ) : place.type === "restaurant" ? (
-                <Icon name="restaurant" size={24} color="green" />
+                <Ionicons name="restaurant" size={18} color="red" />
               ) : null}
             </View>
-            <Callout>
-              <View>
-                <Text>{place.name}</Text>
-                <Text>Tür: {place.type}</Text>
-              </View>
-            </Callout>
           </Marker>
         ))}
       </MapView>
+
       {loading && (
         <View style={globalStyles.loadingContainer}>
           <ActivityIndicator size="large" color="#000" />
-          <Text>Yakindaki yerler yükleniyor...</Text>
+          <Text>Yakındaki yerler yükleniyor...</Text>
         </View>
       )}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={globalStyles.modalOverlay}>
+          <View style={globalStyles.modalContent}>
+            {selectedPlace?.imageUrl ? (
+              <Image
+                source={{ uri: selectedPlace.imageUrl }}
+                style={globalStyles.modalImage}
+              />
+            ) : (
+              <Text style={globalStyles.noImageText}>Resim mevcut değil</Text>
+            )}
+            <Text style={globalStyles.modalTitle}>{selectedPlace?.name}</Text>
+            <Text style={globalStyles.modalType}>{selectedPlace?.type}</Text>
+            <TouchableOpacity
+              style={globalStyles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={globalStyles.closeButtonText}>Kapat</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
