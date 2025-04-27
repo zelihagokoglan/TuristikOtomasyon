@@ -1,6 +1,8 @@
 const express = require("express");
-const app = express();
+const cors = require("cors");
 const { Pool } = require("pg");
+const app = express();
+app.use(cors());
 
 const pool = new Pool({
   user: "postgres",
@@ -16,18 +18,19 @@ app.get("/nearby-places", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, name, type, address, latitude, longitude, description, image_url
-       FROM places
-       WHERE ST_DWithin(
-         geography(ST_MakePoint(longitude, latitude)),
-         geography(ST_MakePoint($1, $2)),
-         $3
-       )`,
+      FROM places
+      WHERE ST_DWithin(
+        geography(ST_MakePoint(longitude, latitude)),
+        geography(ST_MakePoint($1, $2)),
+        $3
+      );
+`,
       [longitude, latitude, radius]
     );
 
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Database query failed:", err.message);
     res.status(500).send("Server Error");
   }
 });
