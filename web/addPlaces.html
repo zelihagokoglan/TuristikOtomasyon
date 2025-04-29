@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+  </head>
+  <body>
+    <h1>Yeni Yer Ekle</h1>
+    <form id="placeForm">
+      <input type="text" id="name" placeholder="İsim" required /><br />
+      <input type="text" id="type" placeholder="Tür" required /><br />
+      <input type="text" id="address" placeholder="Adres" required /><br />
+      <input
+        type="number"
+        step="any"
+        id="latitude"
+        placeholder="Enlem"
+        required
+      /><br />
+      <input
+        type="number"
+        step="any"
+        id="longitude"
+        placeholder="Boylam"
+        required
+      /><br />
+      <textarea id="description" placeholder="Açıklama"></textarea><br />
+      <input type="text" id="image_url" placeholder="Resim URL" /><br /><br />
+      <button type="submit">Ekle</button>
+    </form>
+
+    <script>
+      const form = document.getElementById("placeForm");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const newPlace = {
+          name: document.getElementById("name").value,
+          type: document.getElementById("type").value,
+          address: document.getElementById("address").value,
+          latitude: parseFloat(document.getElementById("latitude").value),
+          longitude: parseFloat(document.getElementById("longitude").value),
+          description: document.getElementById("description").value,
+          image_url: document.getElementById("image_url").value,
+        };
+
+        try {
+          const response = await fetch("http://127.0.0.1:5000/add-place", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newPlace),
+          });
+
+          if (response.ok) {
+            alert("Yer başarıyla eklendi!");
+            form.reset();
+          } else {
+            alert("Bir hata oluştu!");
+          }
+        } catch (error) {
+          console.error("Hata:", error.message);
+          alert("Sunucuya bağlanılamadı.");
+        }
+      });
+    </script>
+  </body>
+</html>

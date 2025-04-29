@@ -35,6 +35,26 @@ app.get("/nearby-places", async (req, res) => {
   }
 });
 
+app.use(express.json());
+
+app.post("/add-place", async (req, res) => {
+  const { name, type, address, latitude, longitude, description, image_url } =
+    req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO places (name, type, address, latitude, longitude, description, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [name, type, address, latitude, longitude, description, image_url]
+    );
+
+    res.status(201).send("Place added successfully");
+  } catch (err) {
+    console.error("Failed to insert place:", err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
 app.listen(5000, () => {
   console.log("Server running on port 5000");
 });
