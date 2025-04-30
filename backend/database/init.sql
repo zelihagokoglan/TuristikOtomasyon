@@ -11,6 +11,8 @@ CREATE TABLE places (
     image_url TEXT
 );
 
+
+
 -- Yorumlar tablosu
 CREATE TABLE reviews (
     id SERIAL PRIMARY KEY,
@@ -19,3 +21,11 @@ CREATE TABLE reviews (
     rating INT CHECK (rating BETWEEN 1 AND 5),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

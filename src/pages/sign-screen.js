@@ -1,13 +1,38 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Button, TextInput } from "react-native-paper";
 import globalStyles from "../styles/globalStyles";
+import { useAuth } from "../hooks/useAuth"; // doğru import
 
 function SignScreen() {
-  // States
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignIn, setIsSignIn] = useState(false);
+  const [isSignIn, setIsSignIn] = useState(true); // Varsayılan giriş ekranı
+
+  const { signIn, signUp, isLoading, error } = useAuth(); // useAuth hook'unu kullan
+
+  // Kullanıcı giriş ya da kayıt olduğunda çağrılacak fonksiyon
+  const handleAuth = async () => {
+    try {
+      let result;
+      if (isSignIn) {
+        result = await signIn(email, password);
+      } else {
+        result = await signUp(email, password);
+      }
+
+      // API'den gelen başarı mesajını göster
+      Alert.alert(
+        "Başarılı",
+        result.message || (isSignIn ? "Giriş başarılı" : "Kayıt başarılı")
+      );
+
+      // Başarılı girişten sonra token'ı sakla (örn. AsyncStorage)
+      // await AsyncStorage.setItem("auth_token", result.token);
+    } catch (error) {
+      Alert.alert("Hata", error.message);
+    }
+  };
 
   return (
     <View style={globalStyles.container}>
@@ -15,45 +40,31 @@ function SignScreen() {
         {isSignIn ? "Sign In" : "Sign Up"}
       </Text>
 
-      <Text style={globalStyles.orText}>with</Text>
-
-      <Button
-        style={globalStyles.signButton}
-        textColor="#000000" // Siyah renk
-        icon="google"
-        mode="outlined"
-        onPress={() => {}}
-      >
-        Google
-      </Button>
-
-      <Text style={globalStyles.orText}>or</Text>
-
       <TextInput
-        style={globalStyles.input}
         label="Email"
         value={email}
-        onChangeText={(text) => setEmail(text)}
+        onChangeText={setEmail}
+        style={globalStyles.input}
         autoCapitalize="none"
-        keyboardType="email-address"
       />
       <TextInput
-        style={[globalStyles.input, { marginBottom: 30 }]}
         label="Password"
         value={password}
-        onChangeText={(text) => setPassword(text)}
+        onChangeText={setPassword}
+        style={globalStyles.input}
         secureTextEntry
       />
 
       <Button
         style={globalStyles.signButton}
-        textColor="#FFFFFF" // Beyaz renk
-        mode="outlined"
-        buttonColor="#000000" // Siyah arka plan
-        onPress={() => {}}
+        mode="contained"
+        onPress={handleAuth} // Burada handleAuth çağrılır
+        loading={isLoading} // Buton yükleniyor durumu
       >
         {isSignIn ? "Sign In" : "Sign Up"}
       </Button>
+
+      {error && <Text style={{ color: "red" }}>{error}</Text>}
 
       <TouchableOpacity onPress={() => setIsSignIn(!isSignIn)}>
         <Text style={globalStyles.toggleText}>

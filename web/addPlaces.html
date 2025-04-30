@@ -1,34 +1,165 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Panel</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: backgroundShift 20s infinite alternate;
+        background: linear-gradient(135deg, #f3e7ff, #dcd0ff);
+        background-size: 200% 200%;
+      }
+
+      @keyframes backgroundShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 100% 50%;
+        }
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 28px;
+        color: #6a0dad;
+        margin-bottom: 20px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        animation: fadeIn 2s ease-out, slideIn 1s ease-out;
+      }
+
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideIn {
+        0% {
+          transform: translateY(-40px);
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+
+      form {
+        background-color: #ffffffdd;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 6px 12px rgba(106, 13, 173, 0.15);
+        width: 100%;
+        max-width: 400px;
+        backdrop-filter: blur(3px);
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        margin: 8px 0;
+        border: 1px solid #d1b3ff;
+        border-radius: 8px;
+        font-size: 14px;
+        background: linear-gradient(120deg, #f2e6ff, #e5ccff, #f2e6ff);
+        background-size: 200% 200%;
+        animation: inputGradient 5s ease infinite;
+        color: #4a0066;
+        transition: 0.2s ease;
+        outline: none;
+      }
+
+      @keyframes inputGradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      input::placeholder,
+      textarea::placeholder {
+        color: #7a499d;
+        opacity: 0.8;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: #6a0dad;
+        box-shadow: 0 0 6px rgba(106, 13, 173, 0.4);
+        background-color: #fdf8ff;
+      }
+
+      textarea {
+        height: 80px;
+        resize: none;
+      }
+
+      button {
+        background-color: #6a0dad;
+        color: white;
+        border: none;
+        padding: 10px;
+        font-size: 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 12px;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #520b74;
+      }
+    </style>
   </head>
   <body>
-    <h1>Yeni Yer Ekle</h1>
-    <form id="placeForm">
-      <input type="text" id="name" placeholder="İsim" required /><br />
-      <input type="text" id="type" placeholder="Tür" required /><br />
-      <input type="text" id="address" placeholder="Adres" required /><br />
-      <input
-        type="number"
-        step="any"
-        id="latitude"
-        placeholder="Enlem"
-        required
-      /><br />
-      <input
-        type="number"
-        step="any"
-        id="longitude"
-        placeholder="Boylam"
-        required
-      /><br />
-      <textarea id="description" placeholder="Açıklama"></textarea><br />
-      <input type="text" id="image_url" placeholder="Resim URL" /><br /><br />
-      <button type="submit">Ekle</button>
-    </form>
+    <div>
+      <h1>Yeni Yer Ekle</h1>
+      <form id="placeForm">
+        <input type="text" id="name" placeholder="İsim" required />
+        <input type="text" id="type" placeholder="Tür" required />
+        <input type="text" id="address" placeholder="Adres" required />
+        <input
+          type="number"
+          step="any"
+          id="latitude"
+          placeholder="Enlem"
+          required
+        />
+        <input
+          type="number"
+          step="any"
+          id="longitude"
+          placeholder="Boylam"
+          required
+        />
+        <textarea id="description" placeholder="Açıklama"></textarea>
+        <input type="text" id="image_url" placeholder="Resim URL" />
+        <button type="submit">Ekle</button>
+      </form>
+    </div>
 
     <script>
       const form = document.getElementById("placeForm");
