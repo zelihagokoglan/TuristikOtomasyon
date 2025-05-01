@@ -61,6 +61,7 @@ app.listen(5000, () => {
 });
 
 // ✅ Kayıt olma (şifre hashlenerek veritabanına eklenir)
+// ✅ Kayıt olma (şifre hashlenerek veritabanına eklenir)
 app.post("/signup", async (req, res) => {
   const { email, password } = req.body;
 
@@ -74,12 +75,15 @@ app.post("/signup", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await pool.query("INSERT INTO users (email, password) VALUES ($1, $2)", [
-      email,
-      hashedPassword,
-    ]);
+    // 👇 INSERT işlemi sırasında user ID'sini döndür
+    const result = await pool.query(
+      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id",
+      [email, hashedPassword]
+    );
 
-    res.status(201).json({ message: "User registered successfully" });
+    const userId = result.rows[0].id;
+
+    res.status(201).json({ message: "User registered successfully", userId }); // 👈 Buraya userId eklendi
   } catch (err) {
     console.error("Signup error:", err.message);
     res.status(500).json({ message: "Server error" });

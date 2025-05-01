@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Alert,
@@ -22,16 +22,20 @@ import {
   addFavorite,
   getFavorites,
 } from "../hooks/favorites";
+import { Menu, MenuItem } from "react-native-material-menu";
+import Icon from "react-native-vector-icons/Feather";
 
-export default function MapScreen() {
+export default function MapScreen({ navigation }) {
   const [location, setLocation] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState([]); // Yorumları tutmak için yeni state
+  const [comments, setComments] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [userId, setUserId] = useState(null);
   const radius = 5000;
+
+  const menuRef = useRef();
 
   useEffect(() => {
     const getUserId = async () => {
@@ -57,8 +61,8 @@ export default function MapScreen() {
     try {
       await addComment(userId, selectedPlace.id, comment);
       const updatedComments = await getComments(selectedPlace.id);
-      setComments(updatedComments); // Yorumları güncelle
-      setComment(""); // Yorum kutusunu temizle
+      setComments(updatedComments);
+      setComment("");
       Alert.alert("Yorum eklendi!");
     } catch (error) {
       console.error("Yorum ekleme hatası:", error);
@@ -107,6 +111,42 @@ export default function MapScreen() {
     setSelectedPlace(place);
     setModalVisible(true);
   };
+
+  // Header sağ üst menü
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Menu
+          ref={menuRef}
+          anchor={
+            <Icon
+              name="more-vertical"
+              size={24}
+              style={{ marginRight: 16 }}
+              onPress={() => menuRef.current.show()}
+            />
+          }
+        >
+          <MenuItem
+            onPress={() => {
+              menuRef.current.hide();
+              navigation.navigate("Favorites");
+            }}
+          >
+            Favorilerim
+          </MenuItem>
+          <MenuItem
+            onPress={() => {
+              menuRef.current.hide();
+              navigation.navigate("Comments");
+            }}
+          >
+            Yorumlarım
+          </MenuItem>
+        </Menu>
+      ),
+    });
+  }, [navigation]);
 
   return (
     <View style={globalStyles.container}>
