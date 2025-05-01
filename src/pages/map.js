@@ -7,6 +7,7 @@ import {
   Image,
   Modal,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
 import MapView, { Marker, UrlTile } from "react-native-maps";
 import * as Location from "expo-location";
@@ -14,12 +15,71 @@ import { useNearbyPlaces } from "../hooks/useNearbyPlaces";
 import globalStyles from "../styles/globalStyles";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  addComment,
+  getComments,
+  addFavorite,
+  getFavorites,
+} from "../hooks/favorites";
 
 export default function MapScreen() {
   const [location, setLocation] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState([]); // Yorumları tutmak için yeni state
+  const [favorites, setFavorites] = useState([]);
+  const [userId, setUserId] = useState(null);
   const radius = 5000;
+
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const storedId = await AsyncStorage.getItem("user_id");
+        if (storedId) {
+          setUserId(storedId);
+        }
+      } catch (error) {
+        console.error("user_id alınamadı:", error);
+      }
+    };
+
+    getUserId();
+  }, []);
+
+  const handleAddComment = async () => {
+    if (!userId) {
+      Alert.alert("Hata", "Lütfen giriş yapın.");
+      return;
+    }
+
+    try {
+      await addComment(userId, selectedPlace.id, comment);
+      const updatedComments = await getComments(selectedPlace.id);
+      setComments(updatedComments); // Yorumları güncelle
+      setComment(""); // Yorum kutusunu temizle
+      Alert.alert("Yorum eklendi!");
+    } catch (error) {
+      console.error("Yorum ekleme hatası:", error);
+    }
+  };
+
+  const handleAddFavorite = async () => {
+    if (!userId) {
+      Alert.alert("Hata", "Lütfen giriş yapın.");
+      return;
+    }
+
+    try {
+      await addFavorite(userId, selectedPlace.id);
+      const updatedFavorites = await getFavorites();
+      setFavorites(updatedFavorites);
+      Alert.alert("Favorilere eklendi!");
+    } catch (error) {
+      console.error("Favori ekleme hatası:", error);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -120,6 +180,61 @@ export default function MapScreen() {
             )}
             <Text style={globalStyles.modalTitle}>{selectedPlace?.name}</Text>
             <Text style={globalStyles.modalType}>{selectedPlace?.type}</Text>
+            <Text style={{ marginTop: 10, fontWeight: "bold" }}>
+              Yorumunuzu ekleyin:
+            </Text>
+            <TextInput
+              placeholder="Yorumunuzu buraya yazın (maks. 256 karakter)"
+              value={comment}
+              onChangeText={(text) => {
+                if (text.length <= 256) setComment(text);
+              }}
+              multiline
+              numberOfLines={4}
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                padding: 10,
+                marginTop: 5,
+                textAlignVertical: "top",
+                height: 100,
+              }}
+              maxLength={256}
+            />
+            <Text
+              style={{ alignSelf: "flex-end", fontSize: 12, color: "#999" }}
+            >
+              {comment.length}/256
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: 10,
+              }}
+            >
+              <TouchableOpacity
+                style={[
+                  globalStyles.button,
+                  { backgroundColor: "#28a745", flex: 1, marginRight: 5 },
+                ]}
+                onPress={handleAddComment}
+              >
+                <Text style={globalStyles.buttonText}>Yorum Ekle</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  globalStyles.button,
+                  { backgroundColor: "#007bff", flex: 1, marginLeft: 5 },
+                ]}
+                onPress={handleAddFavorite}
+              >
+                <Text style={globalStyles.buttonText}>Favorilere Ekle</Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity
               style={globalStyles.closeButton}
               onPress={() => setModalVisible(false)}

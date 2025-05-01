@@ -3,8 +3,9 @@ import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Button, TextInput } from "react-native-paper";
 import globalStyles from "../styles/globalStyles";
 import { useAuth } from "../hooks/useAuth"; // doğru import
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-function SignScreen() {
+function SignScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignIn, setIsSignIn] = useState(true); // Varsayılan giriş ekranı
@@ -13,6 +14,11 @@ function SignScreen() {
 
   // Kullanıcı giriş ya da kayıt olduğunda çağrılacak fonksiyon
   const handleAuth = async () => {
+    if (password.length < 8) {
+      Alert.alert("Hata", "Şifre en az 8 karakter olmalıdır.");
+      return;
+    }
+
     try {
       let result;
       if (isSignIn) {
@@ -21,14 +27,22 @@ function SignScreen() {
         result = await signUp(email, password);
       }
 
-      // API'den gelen başarı mesajını göster
+      console.log("Backend sonucu:", result); // 👈 GEÇİCİ LOG
+
+      // ✅ user_id'yi sakla
+      const userId = result?.user?.id || result?.id || result?.userId;
+      if (userId) {
+        await AsyncStorage.setItem("user_id", userId.toString());
+      } else {
+        console.warn("Kullanıcı ID alınamadı, saklanmadı.");
+      }
+
       Alert.alert(
         "Başarılı",
         result.message || (isSignIn ? "Giriş başarılı" : "Kayıt başarılı")
       );
 
-      // Başarılı girişten sonra token'ı sakla (örn. AsyncStorage)
-      // await AsyncStorage.setItem("auth_token", result.token);
+      navigation.replace("Map");
     } catch (error) {
       Alert.alert("Hata", error.message);
     }
@@ -58,8 +72,8 @@ function SignScreen() {
       <Button
         style={globalStyles.signButton}
         mode="contained"
-        onPress={handleAuth} // Burada handleAuth çağrılır
-        loading={isLoading} // Buton yükleniyor durumu
+        onPress={handleAuth}
+        loading={isLoading}
       >
         {isSignIn ? "Sign In" : "Sign Up"}
       </Button>

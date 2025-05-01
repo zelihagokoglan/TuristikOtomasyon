@@ -5,6 +5,7 @@ const app = express();
 const bcrypt = require("bcrypt"); // <-- BU SATIRI EKLEYİN
 
 app.use(cors());
+app.use(express.json());
 
 const pool = new Pool({
   user: "postgres",
@@ -36,8 +37,6 @@ app.get("/nearby-places", async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
-
-app.use(express.json());
 
 app.post("/add-place", async (req, res) => {
   const { name, type, address, latitude, longitude, description, image_url } =
@@ -110,5 +109,56 @@ app.post("/signin", async (req, res) => {
   } catch (err) {
     console.error("Signin error:", err.message);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.post("/favorites", async (req, res) => {
+  const { user_id, place_id } = req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO favorites (user_id, place_id)
+       VALUES ($1, $2)
+       RETURNING *`,
+      [user_id, place_id]
+    );
+
+    res.status(201).json({ success: true, favorite: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Favori eklenemedi" });
+  }
+});
+
+app.post("/comments", async (req, res) => {
+  console.log("POST /comments endpoint hit");
+
+  const { user_id, place_id, comment } = req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO comments (user_id, place_id, comment)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [user_id, place_id, comment]
+    );
+
+    res.status(201).json({ success: true, comment: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Yorum eklenemedi" });
+  }
+});
+app.get("/comments", async (req, res) => {
+  const { place_id } = req.query;
+  try {
+    const result = await pool.query(
+      `SELECT * FROM comments WHERE place_id = $1`,
+      [place_id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Failed to get comments:", err.message);
+    res.status(500).send("Server Error");
   }
 });
