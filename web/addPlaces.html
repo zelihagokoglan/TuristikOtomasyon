@@ -162,6 +162,12 @@
     </div>
 
     <script>
+      // Token kontrolü: Giriş yapılmamışsa login.html'e yönlendir
+      const token = localStorage.getItem("token");
+      if (!token) {
+        window.location.href = "login.html";
+      }
+
       const form = document.getElementById("placeForm");
 
       form.addEventListener("submit", async (e) => {
@@ -182,6 +188,7 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: "Bearer " + token, // Token ekleniyor
             },
             body: JSON.stringify(newPlace),
           });
@@ -189,6 +196,9 @@
           if (response.ok) {
             alert("Yer başarıyla eklendi!");
             form.reset();
+          } else if (response.status === 401) {
+            alert("Yetkisiz giriş! Lütfen tekrar giriş yapın.");
+            window.location.href = "login.html";
           } else {
             alert("Bir hata oluştu!");
           }

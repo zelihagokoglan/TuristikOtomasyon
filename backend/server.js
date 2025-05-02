@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 const app = express();
-const bcrypt = require("bcrypt"); // <-- BU SATIRI EKLEYİN
+const bcrypt = require("bcrypt");
 
 app.use(cors());
 app.use(express.json());
@@ -60,8 +60,6 @@ app.listen(5000, () => {
   console.log("Server running on port 5000");
 });
 
-// ✅ Kayıt olma (şifre hashlenerek veritabanına eklenir)
-// ✅ Kayıt olma (şifre hashlenerek veritabanına eklenir)
 app.post("/signup", async (req, res) => {
   const { email, password } = req.body;
 
@@ -75,7 +73,6 @@ app.post("/signup", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 👇 INSERT işlemi sırasında user ID'sini döndür
     const result = await pool.query(
       "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id",
       [email, hashedPassword]
@@ -83,14 +80,13 @@ app.post("/signup", async (req, res) => {
 
     const userId = result.rows[0].id;
 
-    res.status(201).json({ message: "User registered successfully", userId }); // 👈 Buraya userId eklendi
+    res.status(201).json({ message: "User registered successfully", userId });
   } catch (err) {
     console.error("Signup error:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// ✅ Giriş yapma (şifre kontrol edilir)
 app.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
@@ -129,8 +125,58 @@ app.post("/favorites", async (req, res) => {
 
     res.status(201).json({ success: true, favorite: result.rows[0] });
   } catch (err) {
-    console.error(err);
+    if (err.code === "23505") {
+      return res
+        .status(409)
+        .json({ success: false, error: "Bu yer zaten favorilerde" });
+    }
+
+    console.error("Favori ekleme hatası:", err);
     res.status(500).json({ success: false, error: "Favori eklenemedi" });
+  }
+});
+app.get("/favorites", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM favorites");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Favorileri getirme hatası:", err.message);
+    res.status(500).json({ success: false, error: "Favoriler alınamadı" });
+  }
+});
+app.get("/places-with-favorites", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        p.id,
+        p.name,
+        COUNT(f.id) AS favorite_count
+      FROM 
+        places p
+      LEFT JOIN 
+        favorites f ON p.id = f.place_id
+      GROUP BY 
+        p.id, p.name
+      ORDER BY 
+        favorite_count DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+app.get("/favorites/count/:placeId", async (req, res) => {
+  const { placeId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT COUNT(*) AS count FROM favorites WHERE place_id = $1`,
+      [placeId]
+    );
+    res.json({ count: parseInt(result.rows[0].count, 10) });
+  } catch (err) {
+    console.error("Favori sayısı alınamadı:", err.message);
+    res.status(500).json({ error: "Sunucu hatası" });
   }
 });
 
@@ -165,4 +211,80 @@ app.get("/comments", async (req, res) => {
     console.error("Failed to get comments:", err.message);
     res.status(500).send("Server Error");
   }
+});
+const jwt = require("jsonwebtoken");
+const SECRET_KEY = process.env.SECRET_KEY;
+
+app.post("/admin/signup", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const existingAdmin = await pool.query(
+      "SELECT * FROM admins WHERE email = $1",
+      [email]
+    );
+    if (existingAdmin.rows.length > 0) {
+      return res.status(400).json({ message: "Bu admin zaten kayıtlı" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      "INSERT INTO admins (email, password) VALUES ($1, $2) RETURNING id",
+      [email, hashedPassword]
+    );
+
+    res.status(201).json({
+      message: "Admin başarıyla kaydedildi",
+      adminId: result.rows[0].id,
+    });
+  } catch (err) {
+    console.error("Admin kayıt hatası:", err.message);
+    res.status(500).json({ message: "Sunucu hatası" });
+  }
+});
+
+app.post("/admin/signin", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const result = await pool.query("SELECT * FROM admins WHERE email = $1", [
+      email,
+    ]);
+    const admin = result.rows[0];
+
+    if (!admin) {
+      return res.status(400).json({ message: "Geçersiz e-posta veya şifre" });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Geçersiz e-posta veya şifre" });
+    }
+
+    const token = jwt.sign({ adminId: admin.id, role: "admin" }, SECRET_KEY, {
+      expiresIn: "2h",
+    });
+
+    res.status(200).json({ message: "Giriş başarılı", token });
+  } catch (err) {
+    console.error("Admin giriş hatası:", err.message);
+    res.status(500).json({ message: "Sunucu hatası" });
+  }
+});
+
+function verifyAdminToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) return res.sendStatus(403);
+
+  jwt.verify(token, SECRET_KEY, (err, admin) => {
+    if (err) return res.sendStatus(403);
+    req.admin = admin;
+    next();
+  });
+}
+
+app.get("/admin/dashboard", verifyAdminToken, (req, res) => {
+  res.json({ message: `Hoş geldin admin ${req.admin.adminId}` });
 });

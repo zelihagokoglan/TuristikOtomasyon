@@ -2,17 +2,15 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Button, TextInput } from "react-native-paper";
 import globalStyles from "../styles/globalStyles";
-import { useAuth } from "../hooks/useAuth"; // doğru import
+import { useAuth } from "../hooks/useAuth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function SignScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignIn, setIsSignIn] = useState(true); // Varsayılan giriş ekranı
+  const [isSignIn, setIsSignIn] = useState(true);
+  const { signIn, signUp, isLoading, error } = useAuth();
 
-  const { signIn, signUp, isLoading, error } = useAuth(); // useAuth hook'unu kullan
-
-  // Kullanıcı giriş ya da kayıt olduğunda çağrılacak fonksiyon
   const handleAuth = async () => {
     if (password.length < 8) {
       Alert.alert("Hata", "Şifre en az 8 karakter olmalıdır.");
@@ -27,9 +25,8 @@ function SignScreen({ navigation }) {
         result = await signUp(email, password);
       }
 
-      console.log("Backend sonucu:", result); // 👈 GEÇİCİ LOG
+      console.log("Backend sonucu:", result);
 
-      // ✅ user_id'yi sakla
       const userId = result?.user?.id || result?.id || result?.userId;
       if (userId) {
         await AsyncStorage.setItem("user_id", userId.toString());

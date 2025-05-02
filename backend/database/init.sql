@@ -46,3 +46,8 @@ CREATE TABLE favorites (
   UNIQUE (user_id, place_id)
 );
 
+CREATE TABLE admins (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password TEXT NOT NULL
+);

@@ -9,8 +9,8 @@ const ButtonComponent = ({ onPress, children }) => {
         style={[
           globalStyles.button,
           {
-            backgroundColor: "#000000", // Siyah renk
-            borderColor: "#000000", // Siyah renk
+            backgroundColor: "#000000",
+            borderColor: "#000000",
             borderWidth: 1,
           },
         ]}

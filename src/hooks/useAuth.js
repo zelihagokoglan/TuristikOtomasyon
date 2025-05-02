@@ -1,7 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
 
-// Giriş işlemi
 const signIn = async (email, password) => {
   try {
     const response = await axios.post("http://10.0.2.2:5000/signin", {
@@ -9,14 +8,13 @@ const signIn = async (email, password) => {
       password,
     });
 
-    return response.data; // Başarılı giriş yanıtını döndür
+    return response.data;
   } catch (err) {
     console.error("SignIn error:", err);
     throw new Error("Giriş başarısız");
   }
 };
 
-// Kayıt işlemi
 const signUp = async (email, password) => {
   try {
     const response = await axios.post("http://10.0.2.2:5000/signup", {
@@ -24,7 +22,7 @@ const signUp = async (email, password) => {
       password,
     });
 
-    return response.data; // Başarılı kayıt yanıtını döndür
+    return response.data;
   } catch (err) {
     console.error("SignUp error:", err);
     throw new Error("Kayıt başarısız");

@@ -21,6 +21,7 @@ import {
   getComments,
   addFavorite,
   getFavorites,
+  getFavoriteCount,
 } from "../hooks/favorites";
 import { Menu, MenuItem } from "react-native-material-menu";
 import Icon from "react-native-vector-icons/Feather";
@@ -33,6 +34,8 @@ export default function MapScreen({ navigation }) {
   const [comments, setComments] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [userId, setUserId] = useState(null);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+
   const radius = 5000;
 
   const menuRef = useRef();
@@ -42,7 +45,7 @@ export default function MapScreen({ navigation }) {
       try {
         const storedId = await AsyncStorage.getItem("user_id");
         if (storedId) {
-          setUserId(storedId);
+          setUserId(parseInt(storedId)); // ✅ string → int dönüşüm
         }
       } catch (error) {
         console.error("user_id alınamadı:", error);
@@ -107,8 +110,14 @@ export default function MapScreen({ navigation }) {
     radius
   );
 
-  const handleMarkerPress = (place) => {
+  const handleMarkerPress = async (place) => {
     setSelectedPlace(place);
+    try {
+      const count = await getFavoriteCount(place.id);
+      setFavoriteCount(count);
+    } catch (err) {
+      console.error("Favori sayısı getirilemedi:", err);
+    }
     setModalVisible(true);
   };
 
@@ -271,7 +280,9 @@ export default function MapScreen({ navigation }) {
                 ]}
                 onPress={handleAddFavorite}
               >
-                <Text style={globalStyles.buttonText}>Favorilere Ekle</Text>
+                <Text style={globalStyles.buttonText}>
+                  Favorilere Ekle ({favoriteCount})
+                </Text>
               </TouchableOpacity>
             </View>
 
