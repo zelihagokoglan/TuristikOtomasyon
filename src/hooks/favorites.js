@@ -44,3 +44,36 @@ export const getFavoriteCount = async (placeId) => {
     return 0;
   }
 };
+export const getUserFavorites = async (userId) => {
+  const response = await axios.get(`${BASE_URL}/user-favorites/${userId}`);
+  return response.data;
+};
+export const getUserComments = async (userId) => {
+  const response = await axios.get(`${BASE_URL}/user-comments/${userId}`);
+  return response.data;
+};
+export const deleteUserComment = async (userId, commentId) => {
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/user-comments/${userId}/${commentId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Yorum silinemedi:", error);
+    console.log("Silinecek yorum:", userId, commentId);
+
+    throw new Error("Yorum silinirken bir hata oluştu.");
+  }
+};
+export const deleteFavorite = async (userId, placeId) => {
+  try {
+    const response = await axios.delete(
+      `${BASE_URL}/user-favorites/${userId}/${placeId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Favori silinemedi:", error);
+    console.log("Silinecek favori:", userId, placeId);
+    throw new Error("Favori silinirken bir hata oluştu.");
+  }
+};

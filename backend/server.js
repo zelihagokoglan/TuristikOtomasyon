@@ -288,3 +288,83 @@ function verifyAdminToken(req, res, next) {
 app.get("/admin/dashboard", verifyAdminToken, (req, res) => {
   res.json({ message: `Hoş geldin admin ${req.admin.adminId}` });
 });
+
+app.get("/user-favorites/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT f.*, p.name AS place_name
+       FROM favorites f
+       JOIN places p ON f.place_id = p.id
+       WHERE f.user_id = $1`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Kullanıcı favorileri alınamadı:", err.message);
+    res.status(500).json({ error: "Sunucu hatası" });
+  }
+});
+
+app.get("/user-comments/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.comment, c.created_at, p.name AS place_name
+       FROM comments c
+       JOIN places p ON c.place_id = p.id
+       WHERE c.user_id = $1
+       ORDER BY c.created_at DESC`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Kullanıcı yorumları alınamadı:", err.message);
+    res.status(500).json({ error: "Sunucu hatası" });
+  }
+});
+// Add a DELETE route to handle comment deletion in your backend
+app.delete("/user-comments/:userId/:commentId", async (req, res) => {
+  const { userId, commentId } = req.params;
+
+  try {
+    // Check if the user is allowed to delete the comment
+    const result = await pool.query(
+      "DELETE FROM comments WHERE user_id = $1 AND id = $2 RETURNING *",
+      [userId, commentId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting comment:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.delete("/user-favorites/:userId/:placeId", async (req, res) => {
+  const { userId, placeId } = req.params;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM favorites WHERE user_id = $1 AND place_id = $2 RETURNING *",
+      [userId, placeId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Favori bulunamadı" });
+    }
+
+    res.status(200).json({ message: "Favori başarıyla silindi" });
+  } catch (err) {
+    console.error("Favori silme hatası:", err.message);
+    res.status(500).json({ message: "Sunucu hatası" });
+  }
+});
