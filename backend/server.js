@@ -3,6 +3,7 @@ const cors = require("cors");
 const { Pool } = require("pg");
 const app = express();
 const bcrypt = require("bcrypt");
+require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
@@ -213,7 +214,7 @@ app.get("/comments", async (req, res) => {
   }
 });
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = process.env.SECRET_KEY;
+const SECRET_KEY = process.env.SECRET_KEY || "defaultSecret";
 
 app.post("/admin/signup", async (req, res) => {
   const { email, password } = req.body;
@@ -327,7 +328,7 @@ app.get("/user-comments/:userId", async (req, res) => {
     res.status(500).json({ error: "Sunucu hatası" });
   }
 });
-// Add a DELETE route to handle comment deletion in your backend
+
 app.delete("/user-comments/:userId/:commentId", async (req, res) => {
   const { userId, commentId } = req.params;
 
